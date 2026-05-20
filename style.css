@@ -90,6 +90,14 @@ body {
     pointer-events: none;
 }
 
+:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.8); outline-offset: 4px; }
+.gallery-item:focus-visible { outline: none; }
+.gallery-item:focus-visible .gallery-item-inner {
+    transform: scale(1.05) translateY(-5px);
+    filter: brightness(1.1) grayscale(0);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.4), 0 20px 60px rgba(0, 0, 0, 0.8);
+}
+
 
 
 /* ── GLOBAL NAVBAR (Frosted Glass) ── */
