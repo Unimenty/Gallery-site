@@ -1,0 +1,3 @@
+## 2025-05-14 - Modal Accessibility and Focus Management
+**Learning:** Static containers used as modals or lightboxes must include `tabindex="-1"` and be programmatically focused via `.focus()` to ensure keyboard events (like Escape or Arrows) are captured immediately by the correct element. Synchronizing the `alt` attribute of lightbox images with their captions ensures descriptive consistency for assistive technologies.
+**Action:** Always add `tabindex="-1"` to modal containers, manage focus restoration using a `lastFocusedElement` pattern, and ensure all dynamic image updates also update the `alt` text.

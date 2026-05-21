@@ -344,20 +344,38 @@ const lightbox = document.getElementById('lightbox');
 const lbImg = document.getElementById('lightbox-img');
 const lbCaption = document.getElementById('lightbox-caption');
 let currentLbIndex = 0;
+let lastFocusedElement = null;
 
 function openLightbox(index) {
+    lastFocusedElement = document.activeElement;
     currentLbIndex = index;
     updateLightbox();
     lightbox.classList.add('active');
+    lightbox.focus();
 }
 
 function updateLightbox() {
     lbImg.src = imageSources[currentLbIndex].src;
+    lbImg.alt = imageSources[currentLbIndex].name;
     lbCaption.innerText = imageSources[currentLbIndex].name;
 }
 
 function closeLightbox() {
     lightbox.classList.remove('active');
+    restoreFocus();
+}
+
+function restoreFocus() {
+    if (lastFocusedElement) {
+        // If the element is now hidden/gone, or was inside the nav overlay which is now closed,
+        // we might want to default to the burger button for a better UX.
+        if (navOverlay.contains(lastFocusedElement) && !navOverlay.classList.contains('active')) {
+            burgerBtn.focus();
+        } else {
+            lastFocusedElement.focus();
+        }
+        lastFocusedElement = null;
+    }
 }
 
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
@@ -384,12 +402,27 @@ lightbox.addEventListener('click', (e) => {
 const burgerBtn = document.getElementById('burger-btn');
 const navOverlay = document.getElementById('nav-overlay');
 
-burgerBtn.addEventListener('click', () => {
-    const isActive = burgerBtn.classList.toggle('active');
-    navOverlay.classList.toggle('active');
+function closeNav() {
+    burgerBtn.classList.remove('active');
+    navOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+    restoreFocus();
+}
 
-    // Prevent scrolling on the grid when menu is up
-    document.body.style.overflow = isActive ? 'hidden' : '';
+function openNav() {
+    lastFocusedElement = document.activeElement;
+    burgerBtn.classList.add('active');
+    navOverlay.classList.add('active');
+    navOverlay.focus();
+    document.body.style.overflow = 'hidden';
+}
+
+burgerBtn.addEventListener('click', () => {
+    if (navOverlay.classList.contains('active')) {
+        closeNav();
+    } else {
+        openNav();
+    }
 });
 
 // Generic Nav Link Handler (Specialized for single page interaction)
@@ -399,7 +432,10 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
 
         // Reset everything first
         heroOverlay.classList.remove('hidden');
-        document.getElementById('services').classList.remove('active');
+
+        if (document.getElementById('services').classList.contains('active')) {
+            closeServices();
+        }
 
         if (href === '#hero-overlay') {
             // Already resetting by removing 'hidden'
@@ -407,33 +443,59 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
             heroOverlay.classList.add('hidden');
         } else if (href === '#services') {
             e.preventDefault();
-            document.getElementById('services').classList.add('active');
+            openServices();
         }
 
-        burgerBtn.classList.remove('active');
-        navOverlay.classList.remove('active');
-        document.body.style.overflow = '';
+        if (navOverlay.classList.contains('active')) {
+            closeNav();
+        }
     });
 });
 
-// Services close
-document.getElementById('services-close').addEventListener('click', () => {
+function openServices() {
+    lastFocusedElement = document.activeElement;
+    document.getElementById('services').classList.add('active');
+    document.getElementById('services').focus();
+}
+
+function closeServices() {
     document.getElementById('services').classList.remove('active');
-});
+    restoreFocus();
+}
+
+// Services close
+document.getElementById('services-close').addEventListener('click', closeServices);
 
 // Close menu on background click
 navOverlay.addEventListener('click', (e) => {
     if (e.target === navOverlay) {
-        burgerBtn.classList.remove('active');
-        navOverlay.classList.remove('active');
-        document.body.style.overflow = '';
+        closeNav();
     }
 });
 
 // Close services on background click
 document.getElementById('services').addEventListener('click', (e) => {
     if (e.target === document.getElementById('services')) {
-        document.getElementById('services').classList.remove('active');
+        closeServices();
+    }
+});
+
+// Global Keyboard Navigation
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (lightbox.classList.contains('active')) closeLightbox();
+        if (navOverlay.classList.contains('active')) closeNav();
+        if (document.getElementById('services').classList.contains('active')) closeServices();
+    }
+
+    if (lightbox.classList.contains('active')) {
+        if (e.key === 'ArrowLeft') {
+            currentLbIndex = (currentLbIndex - 1 + imageSources.length) % imageSources.length;
+            updateLightbox();
+        } else if (e.key === 'ArrowRight') {
+            currentLbIndex = (currentLbIndex + 1) % imageSources.length;
+            updateLightbox();
+        }
     }
 });
 
