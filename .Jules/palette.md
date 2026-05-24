@@ -1,0 +1,3 @@
+## 2025-05-14 - Accessibility Synchronization in Virtualized Grids
+**Learning:** In infinite or virtualized grids that recycle DOM elements for performance, accessibility metadata (like `aria-label`) often becomes "stale" as the underlying data changes. Without manual synchronization, screen readers may announce descriptions for items that are no longer visible or relevant.
+**Action:** Always integrate accessibility attribute updates directly into the grid's "re-render" or "recycle" logic. When an element is repurposed, ensure its `aria-label`, `role`, and `tabindex` are explicitly reset or updated to reflect the new content.

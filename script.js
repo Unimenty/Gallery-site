@@ -188,8 +188,19 @@ for (let c = 0; c < cols; c++) {
 
         // Store click handler index in the element itself for dynamic updates
         el.dataset.sourceIdx = sourceIdx;
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('role', 'button');
+        el.setAttribute('aria-label', `View ${source.name}`);
+
         el.addEventListener('click', () => { 
             if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
+        });
+
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openLightbox(parseInt(el.dataset.sourceIdx));
+            }
         });
 
         items.push({
@@ -240,6 +251,7 @@ function updateGridPatternIfNeeded() {
                 if (img) img.src = newSource.src;
                 if (title) title.innerText = newSource.name;
                 item.el.dataset.sourceIdx = newSourceIdx;
+                item.el.setAttribute('aria-label', `View ${newSource.name}`);
             }
         });
     }
@@ -359,6 +371,28 @@ function updateLightbox() {
 function closeLightbox() {
     lightbox.classList.remove('active');
 }
+
+// Global Keyboard Support
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeLightbox();
+        if (burgerBtn) burgerBtn.classList.remove('active');
+        if (navOverlay) navOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+        const services = document.getElementById('services');
+        if (services) services.classList.remove('active');
+    } else if (lightbox && lightbox.classList.contains('active')) {
+        if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            currentLbIndex = (currentLbIndex + 1) % imageSources.length;
+            updateLightbox();
+        } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            currentLbIndex = (currentLbIndex - 1 + imageSources.length) % imageSources.length;
+            updateLightbox();
+        }
+    }
+});
 
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
 
