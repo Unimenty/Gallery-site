@@ -172,6 +172,10 @@ for (let c = 0; c < cols; c++) {
         const sourceIdx = gridMatrix[c][r];
         const source = imageSources[sourceIdx];
 
+        el.tabIndex = 0;
+        el.setAttribute('role', 'button');
+        el.setAttribute('aria-label', `View ${source.name}`);
+
         const img = document.createElement('img');
         img.src = source.src;
         img.loading = "lazy";
@@ -190,6 +194,12 @@ for (let c = 0; c < cols; c++) {
         el.dataset.sourceIdx = sourceIdx;
         el.addEventListener('click', () => { 
             if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
+        });
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                el.click();
+            }
         });
 
         items.push({
@@ -240,6 +250,7 @@ function updateGridPatternIfNeeded() {
                 if (img) img.src = newSource.src;
                 if (title) title.innerText = newSource.name;
                 item.el.dataset.sourceIdx = newSourceIdx;
+                item.el.setAttribute('aria-label', `View ${newSource.name}`);
             }
         });
     }
@@ -434,6 +445,22 @@ navOverlay.addEventListener('click', (e) => {
 document.getElementById('services').addEventListener('click', (e) => {
     if (e.target === document.getElementById('services')) {
         document.getElementById('services').classList.remove('active');
+    }
+});
+
+// ── GLOBAL KEYBOARD HANDLERS ──
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (typeof closeLightbox === 'function') closeLightbox();
+
+        // Close Nav Overlay
+        if (burgerBtn) burgerBtn.classList.remove('active');
+        if (navOverlay) navOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+
+        // Close Services Overlay
+        const services = document.getElementById('services');
+        if (services) services.classList.remove('active');
     }
 });
 

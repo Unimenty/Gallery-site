@@ -855,3 +855,13 @@ body {
         right: 1.5rem;
     }
 }
+
+/* ── FOCUS STATES ── */
+:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+.gallery-item:focus-visible .gallery-item-inner {
+    transform: scale(1.05); filter: brightness(1.1) grayscale(0);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.4);
+}
+.social-link:focus-visible, .burger-btn:focus-visible, .nav-link:focus-visible, .enter-btn-pill:focus-visible, .lightbox-btn:focus-visible, .lightbox-close:focus-visible, .services-close:focus-visible, .menu-inquiry-btn:focus-visible {
+    outline: 2px solid #fff; outline-offset: 8px;
+}
