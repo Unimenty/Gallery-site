@@ -164,6 +164,8 @@ for (let c = 0; c < cols; c++) {
     for (let r = 0; r < rows; r++) {
         const el = document.createElement('div');
         el.className = 'gallery-item';
+        el.tabIndex = 0;
+        el.setAttribute('role', 'button');
         el.style.width = itemActualW + 'px';
         el.style.height = itemActualH + 'px';
         const inner = document.createElement('div');
@@ -190,6 +192,12 @@ for (let c = 0; c < cols; c++) {
         el.dataset.sourceIdx = sourceIdx;
         el.addEventListener('click', () => { 
             if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
+        });
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openLightbox(parseInt(el.dataset.sourceIdx));
+            }
         });
 
         items.push({
@@ -353,6 +361,7 @@ function openLightbox(index) {
 
 function updateLightbox() {
     lbImg.src = imageSources[currentLbIndex].src;
+    lbImg.alt = imageSources[currentLbIndex].name;
     lbCaption.innerText = imageSources[currentLbIndex].name;
 }
 
@@ -377,6 +386,34 @@ document.getElementById('lightbox-next').addEventListener('click', (e) => {
 lightbox.addEventListener('click', (e) => {
     if (e.target === lightbox || e.target.id === 'lightbox-content') {
         closeLightbox();
+    }
+});
+
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (lightbox?.classList.contains('active')) {
+            closeLightbox();
+        }
+        if (navOverlay?.classList.contains('active')) {
+            burgerBtn?.classList.remove('active');
+            navOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        if (document.getElementById('services')?.classList.contains('active')) {
+            document.getElementById('services').classList.remove('active');
+        }
+    }
+
+    if (lightbox?.classList.contains('active')) {
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            currentLbIndex = (currentLbIndex - 1 + imageSources.length) % imageSources.length;
+            updateLightbox();
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            currentLbIndex = (currentLbIndex + 1) % imageSources.length;
+            updateLightbox();
+        }
     }
 });
 
