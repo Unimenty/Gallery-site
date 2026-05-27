@@ -163,35 +163,21 @@ const gridMatrix = gridPatterns[0]; // Use first pattern for initial render
 for (let c = 0; c < cols; c++) {
     for (let r = 0; r < rows; r++) {
         const el = document.createElement('div');
-        el.className = 'gallery-item';
-        el.style.width = itemActualW + 'px';
-        el.style.height = itemActualH + 'px';
-        const inner = document.createElement('div');
-        inner.className = 'gallery-item-inner';
-
-        const sourceIdx = gridMatrix[c][r];
-        const source = imageSources[sourceIdx];
+        Object.assign(el, { className: 'gallery-item', tabIndex: 0, role: 'button' });
+        Object.assign(el.style, { width: `${itemActualW}px`, height: `${itemActualH}px` });
+        const inner = document.createElement('div'); inner.className = 'gallery-item-inner';
+        const sourceIdx = gridMatrix[c][r]; const source = imageSources[sourceIdx];
+        el.ariaLabel = `View ${source.name}`;
 
         const img = document.createElement('img');
-        img.src = source.src;
-        img.loading = "lazy";
-        const overlay = document.createElement('div');
-        overlay.className = 'overlay';
-        const title = document.createElement('h3');
-        title.innerText = source.name;
+        Object.assign(img, { src: source.src, alt: source.name, loading: 'lazy' });
+        const overlay = document.createElement('div'); overlay.className = 'overlay';
+        const title = document.createElement('h3'); title.innerText = source.name;
 
-        overlay.appendChild(title);
-        inner.appendChild(img);
-        inner.appendChild(overlay);
-        el.appendChild(inner);
-        grid.appendChild(el);
-
-        // Store click handler index in the element itself for dynamic updates
+        inner.append(img, overlay); overlay.append(title); el.append(inner); grid.append(el);
         el.dataset.sourceIdx = sourceIdx;
-        el.addEventListener('click', () => { 
-            if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
-        });
-
+        el.addEventListener('click', () => { if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); });
+        el.addEventListener('keydown', e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), el.click()));
         items.push({
             el,
             initialX: (c - Math.floor(cols / 2)) * itemW,
@@ -231,15 +217,12 @@ function updateGridPatternIfNeeded() {
             const newSourceIdx = newPattern[c][r];
             
             if (newSourceIdx !== item.sourceIdx) {
-                const newSource = imageSources[newSourceIdx];
-                item.sourceIdx = newSourceIdx;
-                
-                // Update image source, caption, and click handler data attribute
+                const ns = imageSources[newSourceIdx]; item.sourceIdx = newSourceIdx;
                 const img = item.el.querySelector('.gallery-item-inner img');
                 const title = item.el.querySelector('.overlay h3');
-                if (img) img.src = newSource.src;
-                if (title) title.innerText = newSource.name;
-                item.el.dataset.sourceIdx = newSourceIdx;
+                if (img) { img.src = ns.src; img.alt = ns.name; }
+                if (title) title.innerText = ns.name;
+                item.el.ariaLabel = `View ${ns.name}`; item.el.dataset.sourceIdx = newSourceIdx;
             }
         });
     }
@@ -344,20 +327,20 @@ const lightbox = document.getElementById('lightbox');
 const lbImg = document.getElementById('lightbox-img');
 const lbCaption = document.getElementById('lightbox-caption');
 let currentLbIndex = 0;
+let lastFocusedElement = null;
 
 function openLightbox(index) {
-    currentLbIndex = index;
-    updateLightbox();
-    lightbox.classList.add('active');
+    lastFocusedElement = document.activeElement; currentLbIndex = index;
+    updateLightbox(); lightbox.classList.add('active'); lightbox.focus();
 }
 
 function updateLightbox() {
-    lbImg.src = imageSources[currentLbIndex].src;
-    lbCaption.innerText = imageSources[currentLbIndex].name;
+    const s = imageSources[currentLbIndex];
+    lbImg.src = s.src; lbImg.alt = s.name; lbCaption.innerText = s.name;
 }
 
 function closeLightbox() {
-    lightbox.classList.remove('active');
+    lightbox.classList.remove('active'); if (lastFocusedElement) lastFocusedElement.focus();
 }
 
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
@@ -386,9 +369,8 @@ const navOverlay = document.getElementById('nav-overlay');
 
 burgerBtn.addEventListener('click', () => {
     const isActive = burgerBtn.classList.toggle('active');
-    navOverlay.classList.toggle('active');
-
-    // Prevent scrolling on the grid when menu is up
+    if (isActive) { lastFocusedElement = document.activeElement; navOverlay.classList.add('active'); navOverlay.focus(); }
+    else { navOverlay.classList.remove('active'); if (lastFocusedElement) lastFocusedElement.focus(); }
     document.body.style.overflow = isActive ? 'hidden' : '';
 });
 
@@ -406,10 +388,9 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
         } else if (href === '#gallery-container') {
             heroOverlay.classList.add('hidden');
         } else if (href === '#services') {
-            e.preventDefault();
-            document.getElementById('services').classList.add('active');
+            e.preventDefault(); lastFocusedElement = document.activeElement;
+            const s = document.getElementById('services'); s.classList.add('active'); s.focus();
         }
-
         burgerBtn.classList.remove('active');
         navOverlay.classList.remove('active');
         document.body.style.overflow = '';
@@ -419,6 +400,7 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
 // Services close
 document.getElementById('services-close').addEventListener('click', () => {
     document.getElementById('services').classList.remove('active');
+    if (lastFocusedElement) lastFocusedElement.focus();
 });
 
 // Close menu on background click
@@ -487,3 +469,15 @@ if (!isMobile) {
         });
     });
 }
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeLightbox(); const s = document.getElementById('services');
+        if (navOverlay.classList.contains('active')) { burgerBtn.classList.remove('active'); navOverlay.classList.remove('active'); if (lastFocusedElement) lastFocusedElement.focus(); }
+        if (s.classList.contains('active')) { s.classList.remove('active'); if (lastFocusedElement) lastFocusedElement.focus(); }
+        document.body.style.overflow = '';
+    }
+    if (lightbox.classList.contains('active')) {
+        if (e.key === 'ArrowRight') { currentLbIndex = (currentLbIndex + 1) % imageSources.length; updateLightbox(); }
+        else if (e.key === 'ArrowLeft') { currentLbIndex = (currentLbIndex - 1 + imageSources.length) % imageSources.length; updateLightbox(); }
+    }
+});

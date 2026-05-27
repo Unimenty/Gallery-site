@@ -1,0 +1,3 @@
+## 2024-05-27 - Focus Restoration in Dynamic Infinite Grids
+**Learning:** In highly dynamic or infinite-scroll grids where DOM elements are recycled or visibility is toggled (e.g., Platinum Grid Engine), standard focus management can break if the focused element is culled. Storing the `activeElement` before opening an overlay and restoring it upon close is essential, but must be paired with an existence check or fallback (e.g., to a global navigation button) if the original trigger is no longer in the DOM or is hidden.
+**Action:** Always implement a `lastFocusedElement` tracker for overlays and include a validation check before calling `.focus()` during the restoration phase to avoid silent failures or resets to the body.

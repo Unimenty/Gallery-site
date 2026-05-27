@@ -855,3 +855,6 @@ body {
         right: 1.5rem;
     }
 }
+:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+.gallery-item:focus-visible { outline-offset: -4px; z-index: 10; }
+.gallery-item:focus-visible .gallery-item-inner { transform: scale(1.05); filter: brightness(1.1) grayscale(0); }
