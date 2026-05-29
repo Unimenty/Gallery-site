@@ -188,9 +188,10 @@ for (let c = 0; c < cols; c++) {
 
         // Store click handler index in the element itself for dynamic updates
         el.dataset.sourceIdx = sourceIdx;
-        el.addEventListener('click', () => { 
-            if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
-        });
+        Object.assign(el, { tabIndex: 0, role: 'button' });
+        el.ariaLabel = `View ${source.name}`;
+        el.addEventListener('click', () => { if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); });
+        el.addEventListener('keydown', e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), el.click()));
 
         items.push({
             el,
@@ -353,7 +354,7 @@ function openLightbox(index) {
 
 function updateLightbox() {
     lbImg.src = imageSources[currentLbIndex].src;
-    lbCaption.innerText = imageSources[currentLbIndex].name;
+    lbImg.alt = lbCaption.innerText = imageSources[currentLbIndex].name;
 }
 
 function closeLightbox() {
@@ -386,6 +387,7 @@ const navOverlay = document.getElementById('nav-overlay');
 
 burgerBtn.addEventListener('click', () => {
     const isActive = burgerBtn.classList.toggle('active');
+    burgerBtn.setAttribute('aria-expanded', isActive);
     navOverlay.classList.toggle('active');
 
     // Prevent scrolling on the grid when menu is up
@@ -487,3 +489,19 @@ if (!isMobile) {
         });
     });
 }
+
+// Global Keyboard Navigation
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeLightbox();
+        burgerBtn.classList.remove('active');
+        burgerBtn.setAttribute('aria-expanded', 'false');
+        navOverlay.classList.remove('active');
+        document.getElementById('services').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    if (lightbox.classList.contains('active')) {
+        if (e.key === 'ArrowLeft') document.getElementById('lightbox-prev').click();
+        if (e.key === 'ArrowRight') document.getElementById('lightbox-next').click();
+    }
+});
