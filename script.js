@@ -166,11 +166,15 @@ for (let c = 0; c < cols; c++) {
         el.className = 'gallery-item';
         el.style.width = itemActualW + 'px';
         el.style.height = itemActualH + 'px';
+        el.tabIndex = 0;
+        el.role = "button";
+
         const inner = document.createElement('div');
         inner.className = 'gallery-item-inner';
 
         const sourceIdx = gridMatrix[c][r];
         const source = imageSources[sourceIdx];
+        el.ariaLabel = `View image by ${source.name}`;
 
         const img = document.createElement('img');
         img.src = source.src;
@@ -188,9 +192,9 @@ for (let c = 0; c < cols; c++) {
 
         // Store click handler index in the element itself for dynamic updates
         el.dataset.sourceIdx = sourceIdx;
-        el.addEventListener('click', () => { 
-            if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
-        });
+        const triggerLightbox = () => { if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); };
+        el.addEventListener('click', triggerLightbox);
+        el.addEventListener('keydown', e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), triggerLightbox()));
 
         items.push({
             el,
@@ -239,6 +243,7 @@ function updateGridPatternIfNeeded() {
                 const title = item.el.querySelector('.overlay h3');
                 if (img) img.src = newSource.src;
                 if (title) title.innerText = newSource.name;
+                item.el.ariaLabel = `View image by ${newSource.name}`;
                 item.el.dataset.sourceIdx = newSourceIdx;
             }
         });
@@ -336,6 +341,21 @@ window.addEventListener('touchmove', drag, { passive: false });
 window.addEventListener('mouseup', dragEnd);
 window.addEventListener('touchend', dragEnd);
 window.addEventListener('wheel', (e) => { targetX -= e.deltaX; targetY -= e.deltaY; }, { passive: true });
+
+// GLOBAL KEYBOARD NAVIGATION
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (lightbox.classList.contains('active')) closeLightbox();
+        if (navOverlay.classList.contains('active')) burgerBtn.click();
+        const services = document.getElementById('services');
+        if (services.classList.contains('active')) services.querySelector('.services-close').click();
+    }
+    if (lightbox.classList.contains('active')) {
+        if (e.key === 'ArrowLeft') document.getElementById('lightbox-prev').click();
+        if (e.key === 'ArrowRight') document.getElementById('lightbox-next').click();
+    }
+});
+
 loop();
 
 
@@ -344,20 +364,26 @@ const lightbox = document.getElementById('lightbox');
 const lbImg = document.getElementById('lightbox-img');
 const lbCaption = document.getElementById('lightbox-caption');
 let currentLbIndex = 0;
+let lastFocusedElement = null;
 
 function openLightbox(index) {
+    lastFocusedElement = document.activeElement;
     currentLbIndex = index;
     updateLightbox();
     lightbox.classList.add('active');
+    lightbox.setAttribute('tabindex', '-1');
+    lightbox.focus();
 }
 
 function updateLightbox() {
     lbImg.src = imageSources[currentLbIndex].src;
     lbCaption.innerText = imageSources[currentLbIndex].name;
+    lbImg.alt = `Photography work: ${imageSources[currentLbIndex].name}`;
 }
 
 function closeLightbox() {
     lightbox.classList.remove('active');
+    if (lastFocusedElement) lastFocusedElement.focus();
 }
 
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
@@ -387,6 +413,15 @@ const navOverlay = document.getElementById('nav-overlay');
 burgerBtn.addEventListener('click', () => {
     const isActive = burgerBtn.classList.toggle('active');
     navOverlay.classList.toggle('active');
+    burgerBtn.setAttribute('aria-expanded', isActive);
+
+    if (isActive) {
+        lastFocusedElement = document.activeElement;
+        navOverlay.setAttribute('tabindex', '-1');
+        navOverlay.focus();
+    } else {
+        if (lastFocusedElement) lastFocusedElement.focus();
+    }
 
     // Prevent scrolling on the grid when menu is up
     document.body.style.overflow = isActive ? 'hidden' : '';
@@ -407,10 +442,15 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
             heroOverlay.classList.add('hidden');
         } else if (href === '#services') {
             e.preventDefault();
-            document.getElementById('services').classList.add('active');
+            const services = document.getElementById('services');
+            lastFocusedElement = document.activeElement;
+            services.classList.add('active');
+            services.setAttribute('tabindex', '-1');
+            services.focus();
         }
 
         burgerBtn.classList.remove('active');
+        burgerBtn.setAttribute('aria-expanded', 'false');
         navOverlay.classList.remove('active');
         document.body.style.overflow = '';
     });
@@ -419,6 +459,7 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
 // Services close
 document.getElementById('services-close').addEventListener('click', () => {
     document.getElementById('services').classList.remove('active');
+    if (lastFocusedElement) lastFocusedElement.focus();
 });
 
 // Close menu on background click
