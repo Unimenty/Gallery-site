@@ -1,0 +1,3 @@
+## 2025-05-14 - Focus Restoration and Overlay Visibility
+**Learning:** When using custom cursors (`cursor: none`), standard focus indicators are the only way for keyboard users to navigate. Overlays hidden with `opacity: 0` remain in the tab order, which is confusing for screen readers and keyboard users.
+**Action:** Always use `visibility: hidden` (or `display: none`) in conjunction with opacity transitions to remove inactive elements from the accessibility tree. Use a global state to track `lastFocusedElement` for reliable focus restoration after closing modals.
