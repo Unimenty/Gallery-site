@@ -1,6 +1,7 @@
 // Hero Enter Button Logic
 const enterBtn = document.getElementById('enter-btn');
 const heroOverlay = document.getElementById('hero-overlay');
+let lastFocusedElement = null;
 
 enterBtn.addEventListener('click', () => {
     heroOverlay.classList.add('hidden');
@@ -188,8 +189,17 @@ for (let c = 0; c < cols; c++) {
 
         // Store click handler index in the element itself for dynamic updates
         el.dataset.sourceIdx = sourceIdx;
+        el.tabIndex = 0;
+        el.role = "button";
+        el.setAttribute('aria-label', `View ${source.name} project`);
         el.addEventListener('click', () => { 
             if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
+        });
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                el.click();
+            }
         });
 
         items.push({
@@ -240,6 +250,7 @@ function updateGridPatternIfNeeded() {
                 if (img) img.src = newSource.src;
                 if (title) title.innerText = newSource.name;
                 item.el.dataset.sourceIdx = newSourceIdx;
+                item.el.setAttribute('aria-label', `View ${newSource.name} project`);
             }
         });
     }
@@ -346,9 +357,11 @@ const lbCaption = document.getElementById('lightbox-caption');
 let currentLbIndex = 0;
 
 function openLightbox(index) {
+    lastFocusedElement = document.activeElement;
     currentLbIndex = index;
     updateLightbox();
     lightbox.classList.add('active');
+    lightbox.focus();
 }
 
 function updateLightbox() {
@@ -356,8 +369,19 @@ function updateLightbox() {
     lbCaption.innerText = imageSources[currentLbIndex].name;
 }
 
+function restoreFocus() {
+    if (lastFocusedElement && document.body.contains(lastFocusedElement)) {
+        if (!navOverlay.classList.contains('active') && navOverlay.contains(lastFocusedElement)) {
+            burgerBtn.focus();
+        } else {
+            lastFocusedElement.focus();
+        }
+    }
+}
+
 function closeLightbox() {
     lightbox.classList.remove('active');
+    restoreFocus();
 }
 
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
@@ -387,6 +411,12 @@ const navOverlay = document.getElementById('nav-overlay');
 burgerBtn.addEventListener('click', () => {
     const isActive = burgerBtn.classList.toggle('active');
     navOverlay.classList.toggle('active');
+    if (isActive) {
+        lastFocusedElement = document.activeElement;
+        navOverlay.focus();
+    } else {
+        restoreFocus();
+    }
 
     // Prevent scrolling on the grid when menu is up
     document.body.style.overflow = isActive ? 'hidden' : '';
@@ -407,7 +437,10 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
             heroOverlay.classList.add('hidden');
         } else if (href === '#services') {
             e.preventDefault();
-            document.getElementById('services').classList.add('active');
+            lastFocusedElement = document.activeElement;
+            const s = document.getElementById('services');
+            s.classList.add('active');
+            s.focus();
         }
 
         burgerBtn.classList.remove('active');
@@ -419,6 +452,7 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
 // Services close
 document.getElementById('services-close').addEventListener('click', () => {
     document.getElementById('services').classList.remove('active');
+    restoreFocus();
 });
 
 // Close menu on background click
@@ -487,3 +521,30 @@ if (!isMobile) {
         });
     });
 }
+
+// ── GLOBAL KEYBOARD LISTENERS ──
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (lightbox.classList.contains('active')) closeLightbox();
+        if (navOverlay.classList.contains('active')) {
+            burgerBtn.classList.remove('active');
+            navOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+            restoreFocus();
+        }
+        const s = document.getElementById('services');
+        if (s.classList.contains('active')) {
+            s.classList.remove('active');
+            restoreFocus();
+        }
+    }
+    if (lightbox.classList.contains('active')) {
+        if (e.key === 'ArrowLeft') {
+            currentLbIndex = (currentLbIndex - 1 + imageSources.length) % imageSources.length;
+            updateLightbox();
+        } else if (e.key === 'ArrowRight') {
+            currentLbIndex = (currentLbIndex + 1) % imageSources.length;
+            updateLightbox();
+        }
+    }
+});
