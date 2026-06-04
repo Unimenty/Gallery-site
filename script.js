@@ -166,14 +166,19 @@ for (let c = 0; c < cols; c++) {
         el.className = 'gallery-item';
         el.style.width = itemActualW + 'px';
         el.style.height = itemActualH + 'px';
+        el.setAttribute('role', 'button');
+        el.setAttribute('tabindex', '0');
+
         const inner = document.createElement('div');
         inner.className = 'gallery-item-inner';
 
         const sourceIdx = gridMatrix[c][r];
         const source = imageSources[sourceIdx];
+        el.setAttribute('aria-label', `View ${source.name}`);
 
         const img = document.createElement('img');
         img.src = source.src;
+        img.alt = source.name;
         img.loading = "lazy";
         const overlay = document.createElement('div');
         overlay.className = 'overlay';
@@ -190,6 +195,12 @@ for (let c = 0; c < cols; c++) {
         el.dataset.sourceIdx = sourceIdx;
         el.addEventListener('click', () => { 
             if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
+        });
+        el.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                el.click();
+            }
         });
 
         items.push({
@@ -237,8 +248,12 @@ function updateGridPatternIfNeeded() {
                 // Update image source, caption, and click handler data attribute
                 const img = item.el.querySelector('.gallery-item-inner img');
                 const title = item.el.querySelector('.overlay h3');
-                if (img) img.src = newSource.src;
+                if (img) {
+                    img.src = newSource.src;
+                    img.alt = newSource.name;
+                }
                 if (title) title.innerText = newSource.name;
+                item.el.setAttribute('aria-label', `View ${newSource.name}`);
                 item.el.dataset.sourceIdx = newSourceIdx;
             }
         });
@@ -339,6 +354,8 @@ window.addEventListener('wheel', (e) => { targetX -= e.deltaX; targetY -= e.delt
 loop();
 
 
+let lastFocusedElement = null;
+
 // ── LIGHTBOX LOGIC ──
 const lightbox = document.getElementById('lightbox');
 const lbImg = document.getElementById('lightbox-img');
@@ -346,18 +363,22 @@ const lbCaption = document.getElementById('lightbox-caption');
 let currentLbIndex = 0;
 
 function openLightbox(index) {
+    lastFocusedElement = document.activeElement;
     currentLbIndex = index;
     updateLightbox();
     lightbox.classList.add('active');
+    lightbox.focus();
 }
 
 function updateLightbox() {
     lbImg.src = imageSources[currentLbIndex].src;
     lbCaption.innerText = imageSources[currentLbIndex].name;
+    lbImg.alt = imageSources[currentLbIndex].name;
 }
 
 function closeLightbox() {
     lightbox.classList.remove('active');
+    if (lastFocusedElement) lastFocusedElement.focus();
 }
 
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
@@ -388,6 +409,13 @@ burgerBtn.addEventListener('click', () => {
     const isActive = burgerBtn.classList.toggle('active');
     navOverlay.classList.toggle('active');
 
+    if (isActive) {
+        lastFocusedElement = document.activeElement;
+        navOverlay.focus();
+    } else {
+        if (lastFocusedElement) lastFocusedElement.focus();
+    }
+
     // Prevent scrolling on the grid when menu is up
     document.body.style.overflow = isActive ? 'hidden' : '';
 });
@@ -407,7 +435,9 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
             heroOverlay.classList.add('hidden');
         } else if (href === '#services') {
             e.preventDefault();
+            lastFocusedElement = document.activeElement;
             document.getElementById('services').classList.add('active');
+            document.getElementById('services').focus();
         }
 
         burgerBtn.classList.remove('active');
@@ -419,6 +449,7 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
 // Services close
 document.getElementById('services-close').addEventListener('click', () => {
     document.getElementById('services').classList.remove('active');
+    if (lastFocusedElement) lastFocusedElement.focus();
 });
 
 // Close menu on background click
@@ -487,3 +518,31 @@ if (!isMobile) {
         });
     });
 }
+
+// ── GLOBAL KEYBOARD LISTENERS ──
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (lightbox.classList.contains('active')) closeLightbox();
+        if (navOverlay.classList.contains('active')) {
+            burgerBtn.classList.remove('active');
+            navOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+            if (lastFocusedElement) lastFocusedElement.focus();
+        }
+        const services = document.getElementById('services');
+        if (services.classList.contains('active')) {
+            services.classList.remove('active');
+            if (lastFocusedElement) lastFocusedElement.focus();
+        }
+    }
+
+    if (lightbox.classList.contains('active')) {
+        if (e.key === 'ArrowLeft') {
+            currentLbIndex = (currentLbIndex - 1 + imageSources.length) % imageSources.length;
+            updateLightbox();
+        } else if (e.key === 'ArrowRight') {
+            currentLbIndex = (currentLbIndex + 1) % imageSources.length;
+            updateLightbox();
+        }
+    }
+});
