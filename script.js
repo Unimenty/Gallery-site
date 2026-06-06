@@ -1,3 +1,6 @@
+let lastFocusedElement = null;
+const restoreFocus = () => { if (lastFocusedElement) lastFocusedElement.focus(); };
+
 // Hero Enter Button Logic
 const enterBtn = document.getElementById('enter-btn');
 const heroOverlay = document.getElementById('hero-overlay');
@@ -174,6 +177,7 @@ for (let c = 0; c < cols; c++) {
 
         const img = document.createElement('img');
         img.src = source.src;
+        img.alt = source.name;
         img.loading = "lazy";
         const overlay = document.createElement('div');
         overlay.className = 'overlay';
@@ -188,9 +192,11 @@ for (let c = 0; c < cols; c++) {
 
         // Store click handler index in the element itself for dynamic updates
         el.dataset.sourceIdx = sourceIdx;
+        el.tabIndex = 0; el.setAttribute('role', 'button');
         el.addEventListener('click', () => { 
             if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
         });
+        el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } });
 
         items.push({
             el,
@@ -346,18 +352,22 @@ const lbCaption = document.getElementById('lightbox-caption');
 let currentLbIndex = 0;
 
 function openLightbox(index) {
+    lastFocusedElement = document.activeElement;
     currentLbIndex = index;
     updateLightbox();
     lightbox.classList.add('active');
+    lightbox.focus();
 }
 
 function updateLightbox() {
     lbImg.src = imageSources[currentLbIndex].src;
+    lbImg.alt = imageSources[currentLbIndex].name;
     lbCaption.innerText = imageSources[currentLbIndex].name;
 }
 
 function closeLightbox() {
     lightbox.classList.remove('active');
+    restoreFocus();
 }
 
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
@@ -387,7 +397,7 @@ const navOverlay = document.getElementById('nav-overlay');
 burgerBtn.addEventListener('click', () => {
     const isActive = burgerBtn.classList.toggle('active');
     navOverlay.classList.toggle('active');
-
+    if (isActive) { lastFocusedElement = burgerBtn; navOverlay.focus(); } else { restoreFocus(); }
     // Prevent scrolling on the grid when menu is up
     document.body.style.overflow = isActive ? 'hidden' : '';
 });
@@ -407,7 +417,9 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
             heroOverlay.classList.add('hidden');
         } else if (href === '#services') {
             e.preventDefault();
+            lastFocusedElement = link;
             document.getElementById('services').classList.add('active');
+            document.getElementById('services').focus();
         }
 
         burgerBtn.classList.remove('active');
@@ -419,6 +431,7 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
 // Services close
 document.getElementById('services-close').addEventListener('click', () => {
     document.getElementById('services').classList.remove('active');
+    restoreFocus();
 });
 
 // Close menu on background click
@@ -434,6 +447,19 @@ navOverlay.addEventListener('click', (e) => {
 document.getElementById('services').addEventListener('click', (e) => {
     if (e.target === document.getElementById('services')) {
         document.getElementById('services').classList.remove('active');
+        restoreFocus();
+    }
+});
+
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (lightbox.classList.contains('active')) closeLightbox();
+        if (navOverlay.classList.contains('active')) { burgerBtn.classList.remove('active'); navOverlay.classList.remove('active'); document.body.style.overflow = ''; restoreFocus(); }
+        if (document.getElementById('services').classList.contains('active')) { document.getElementById('services').classList.remove('active'); restoreFocus(); }
+    }
+    if (lightbox.classList.contains('active')) {
+        if (e.key === 'ArrowLeft') { currentLbIndex = (currentLbIndex - 1 + imageSources.length) % imageSources.length; updateLightbox(); }
+        if (e.key === 'ArrowRight') { currentLbIndex = (currentLbIndex + 1) % imageSources.length; updateLightbox(); }
     }
 });
 
