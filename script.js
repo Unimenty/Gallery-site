@@ -185,6 +185,8 @@ for (let c = 0; c < cols; c++) {
         inner.appendChild(overlay);
         el.appendChild(inner);
         grid.appendChild(el);
+        Object.assign(el, { tabIndex: 0, role: 'button' }); el.setAttribute('aria-label', source.name);
+        el.addEventListener('keydown', e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), el.click()));
 
         // Store click handler index in the element itself for dynamic updates
         el.dataset.sourceIdx = sourceIdx;
@@ -239,6 +241,7 @@ function updateGridPatternIfNeeded() {
                 const title = item.el.querySelector('.overlay h3');
                 if (img) img.src = newSource.src;
                 if (title) title.innerText = newSource.name;
+                item.el.setAttribute('aria-label', newSource.name);
                 item.el.dataset.sourceIdx = newSourceIdx;
             }
         });
@@ -266,9 +269,9 @@ function render() {
         const y = wrap(item.initialY + currentY, -totalH / 2, totalH / 2);
 
         if (x < -itemW - margin || x > winW + margin || y < -itemH - margin || y > winH + margin) {
-            item.el.style.visibility = 'hidden';
+            if (item.el.style.visibility !== 'hidden') { item.el.style.visibility = 'hidden'; item.el.tabIndex = -1; }
         } else {
-            item.el.style.visibility = 'visible';
+            if (item.el.style.visibility !== 'visible') { item.el.style.visibility = 'visible'; item.el.tabIndex = 0; }
             item.el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
         }
     });
@@ -344,20 +347,21 @@ const lightbox = document.getElementById('lightbox');
 const lbImg = document.getElementById('lightbox-img');
 const lbCaption = document.getElementById('lightbox-caption');
 let currentLbIndex = 0;
+let lastFocusedElement = null;
 
 function openLightbox(index) {
-    currentLbIndex = index;
-    updateLightbox();
-    lightbox.classList.add('active');
+    lastFocusedElement = document.activeElement; currentLbIndex = index;
+    updateLightbox(); lightbox.classList.add('active'); lightbox.focus();
 }
 
 function updateLightbox() {
     lbImg.src = imageSources[currentLbIndex].src;
+    lbImg.alt = imageSources[currentLbIndex].name;
     lbCaption.innerText = imageSources[currentLbIndex].name;
 }
 
 function closeLightbox() {
-    lightbox.classList.remove('active');
+    lightbox.classList.remove('active'); if (lastFocusedElement) lastFocusedElement.focus();
 }
 
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
@@ -407,7 +411,9 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
             heroOverlay.classList.add('hidden');
         } else if (href === '#services') {
             e.preventDefault();
+            lastFocusedElement = burgerBtn;
             document.getElementById('services').classList.add('active');
+            document.getElementById('services').focus();
         }
 
         burgerBtn.classList.remove('active');
@@ -419,6 +425,7 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
 // Services close
 document.getElementById('services-close').addEventListener('click', () => {
     document.getElementById('services').classList.remove('active');
+    if (lastFocusedElement) lastFocusedElement.focus();
 });
 
 // Close menu on background click
@@ -434,6 +441,30 @@ navOverlay.addEventListener('click', (e) => {
 document.getElementById('services').addEventListener('click', (e) => {
     if (e.target === document.getElementById('services')) {
         document.getElementById('services').classList.remove('active');
+        if (lastFocusedElement) lastFocusedElement.focus();
+    }
+});
+
+// Global Keyboard Handler
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (lightbox.classList.contains('active')) closeLightbox();
+        else if (document.getElementById('services').classList.contains('active')) {
+            document.getElementById('services').classList.remove('active');
+            if (lastFocusedElement) lastFocusedElement.focus();
+        } else if (navOverlay.classList.contains('active')) {
+            burgerBtn.classList.remove('active');
+            navOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    } else if (lightbox.classList.contains('active')) {
+        if (e.key === 'ArrowLeft') {
+            currentLbIndex = (currentLbIndex - 1 + imageSources.length) % imageSources.length;
+            updateLightbox();
+        } else if (e.key === 'ArrowRight') {
+            currentLbIndex = (currentLbIndex + 1) % imageSources.length;
+            updateLightbox();
+        }
     }
 });
 
