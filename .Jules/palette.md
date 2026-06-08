@@ -1,0 +1,3 @@
+## 2025-05-15 - Dynamic Tabindex in Infinite/Wrapped Grids
+**Learning:** In infinite or virtualized grids where items are physically moved or wrapped across viewport boundaries (like the Platinum Grid Engine), static `tabindex="0"` on all items causes "ghost" focus issues where keyboard users can focus on off-screen/culled elements.
+**Action:** Dynamically manage `tabindex` within the grid's `render()` or loop function. Set `tabindex="0"` only for elements currently within the viewport and `tabindex="-1"` for those outside. This ensures the Tab order remains predictable and only interacts with visible content.
