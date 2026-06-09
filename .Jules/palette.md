@@ -1,0 +1,3 @@
+## 2025-05-14 - Modal & Grid Keyboard Accessibility
+**Learning:** High-fashion portfolios often use custom cursors (`cursor: none`) and complex animation logic that can inadvertently break standard keyboard navigation and focus visibility. Adding `tabindex="-1"` to modal containers and programmatically calling `.focus()` is essential for screen reader and keyboard-only users to "land" in the new context.
+**Action:** Always verify that opening a modal/overlay shifts focus to that container, and closing it restores focus to the triggering element. Use `:focus-visible` to provide high-contrast indicators that don't interfere with the visual design for mouse users.
