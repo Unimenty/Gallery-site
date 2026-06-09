@@ -188,9 +188,11 @@ for (let c = 0; c < cols; c++) {
 
         // Store click handler index in the element itself for dynamic updates
         el.dataset.sourceIdx = sourceIdx;
-        el.addEventListener('click', () => { 
-            if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
-        });
+        el.tabIndex = 0;
+        el.setAttribute('role', 'button');
+        el.setAttribute('aria-label', `View ${source.name}`);
+        el.addEventListener('click', () => { if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); });
+        el.addEventListener('keydown', (e) => (e.key==='Enter' || e.key===' ') && (e.preventDefault(), el.click()));
 
         items.push({
             el,
@@ -240,6 +242,7 @@ function updateGridPatternIfNeeded() {
                 if (img) img.src = newSource.src;
                 if (title) title.innerText = newSource.name;
                 item.el.dataset.sourceIdx = newSourceIdx;
+                item.el.setAttribute('aria-label', `View ${newSource.name}`);
             }
         });
     }
@@ -336,6 +339,17 @@ window.addEventListener('touchmove', drag, { passive: false });
 window.addEventListener('mouseup', dragEnd);
 window.addEventListener('touchend', dragEnd);
 window.addEventListener('wheel', (e) => { targetX -= e.deltaX; targetY -= e.deltaY; }, { passive: true });
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (lightbox.classList.contains('active')) closeLightbox();
+        else if (navOverlay.classList.contains('active')) burgerBtn.click();
+        else if (document.getElementById('services').classList.contains('active')) document.getElementById('services-close').click();
+    }
+    if (lightbox.classList.contains('active')) {
+        if (e.key === 'ArrowLeft') document.getElementById('lightbox-prev').click();
+        if (e.key === 'ArrowRight') document.getElementById('lightbox-next').click();
+    }
+});
 loop();
 
 
@@ -343,21 +357,25 @@ loop();
 const lightbox = document.getElementById('lightbox');
 const lbImg = document.getElementById('lightbox-img');
 const lbCaption = document.getElementById('lightbox-caption');
-let currentLbIndex = 0;
+let currentLbIndex = 0, lastFocused = null;
+const restoreFocus = () => { if (lastFocused) lastFocused.focus(); lastFocused = null; };
 
 function openLightbox(index) {
+    lastFocused = document.activeElement;
     currentLbIndex = index;
     updateLightbox();
     lightbox.classList.add('active');
+    lightbox.focus();
 }
 
 function updateLightbox() {
     lbImg.src = imageSources[currentLbIndex].src;
-    lbCaption.innerText = imageSources[currentLbIndex].name;
+    lbCaption.innerText = lbImg.alt = imageSources[currentLbIndex].name;
 }
 
 function closeLightbox() {
     lightbox.classList.remove('active');
+    restoreFocus();
 }
 
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
@@ -386,9 +404,9 @@ const navOverlay = document.getElementById('nav-overlay');
 
 burgerBtn.addEventListener('click', () => {
     const isActive = burgerBtn.classList.toggle('active');
+    burgerBtn.setAttribute('aria-expanded', isActive);
     navOverlay.classList.toggle('active');
-
-    // Prevent scrolling on the grid when menu is up
+    if (isActive) { lastFocused = burgerBtn; navOverlay.focus(); } else restoreFocus();
     document.body.style.overflow = isActive ? 'hidden' : '';
 });
 
@@ -401,16 +419,15 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
         heroOverlay.classList.remove('hidden');
         document.getElementById('services').classList.remove('active');
 
-        if (href === '#hero-overlay') {
-            // Already resetting by removing 'hidden'
-        } else if (href === '#gallery-container') {
-            heroOverlay.classList.add('hidden');
-        } else if (href === '#services') {
+        if (href === '#gallery-container') heroOverlay.classList.add('hidden');
+        else if (href === '#services') {
             e.preventDefault();
+            lastFocused = burgerBtn;
             document.getElementById('services').classList.add('active');
+            document.getElementById('services').focus();
         }
-
         burgerBtn.classList.remove('active');
+        burgerBtn.setAttribute('aria-expanded', 'false');
         navOverlay.classList.remove('active');
         document.body.style.overflow = '';
     });
@@ -419,6 +436,7 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
 // Services close
 document.getElementById('services-close').addEventListener('click', () => {
     document.getElementById('services').classList.remove('active');
+    restoreFocus();
 });
 
 // Close menu on background click
