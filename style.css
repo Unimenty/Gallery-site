@@ -76,6 +76,22 @@ body {
     background: rgba(255, 255, 255, 0.05);
 }
 
+/* ── KEYBOARD FOCUS STATES ── */
+:focus-visible {
+    outline: 2px solid #fff !important;
+    outline-offset: 4px;
+}
+
+.gallery-item:focus-visible {
+    outline-offset: -4px;
+    z-index: 10;
+}
+
+.gallery-item:focus-visible .gallery-item-inner {
+    transform: scale(1.08) translateY(-10px);
+    filter: brightness(1.1) grayscale(0);
+}
+
 /* ── GRID ENTRANCE ── */
 .gallery-item {
     opacity: 0;

@@ -1,3 +1,15 @@
+// Focus Management
+let lastFocusedElement = null;
+function restoreFocus() {
+    if (!lastFocusedElement) return;
+    if (navOverlay.contains(lastFocusedElement) && !navOverlay.classList.contains('active')) {
+        burgerBtn.focus();
+    } else {
+        lastFocusedElement.focus();
+    }
+    lastFocusedElement = null;
+}
+
 // Hero Enter Button Logic
 const enterBtn = document.getElementById('enter-btn');
 const heroOverlay = document.getElementById('hero-overlay');
@@ -164,6 +176,8 @@ for (let c = 0; c < cols; c++) {
     for (let r = 0; r < rows; r++) {
         const el = document.createElement('div');
         el.className = 'gallery-item';
+        el.setAttribute('role', 'button');
+        el.setAttribute('tabindex', '0');
         el.style.width = itemActualW + 'px';
         el.style.height = itemActualH + 'px';
         const inner = document.createElement('div');
@@ -190,6 +204,12 @@ for (let c = 0; c < cols; c++) {
         el.dataset.sourceIdx = sourceIdx;
         el.addEventListener('click', () => { 
             if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
+        });
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                el.click();
+            }
         });
 
         items.push({
@@ -346,18 +366,22 @@ const lbCaption = document.getElementById('lightbox-caption');
 let currentLbIndex = 0;
 
 function openLightbox(index) {
+    lastFocusedElement = document.activeElement;
     currentLbIndex = index;
     updateLightbox();
     lightbox.classList.add('active');
+    lightbox.focus();
 }
 
 function updateLightbox() {
     lbImg.src = imageSources[currentLbIndex].src;
+    lbImg.alt = imageSources[currentLbIndex].name;
     lbCaption.innerText = imageSources[currentLbIndex].name;
 }
 
 function closeLightbox() {
     lightbox.classList.remove('active');
+    restoreFocus();
 }
 
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
@@ -386,9 +410,14 @@ const navOverlay = document.getElementById('nav-overlay');
 
 burgerBtn.addEventListener('click', () => {
     const isActive = burgerBtn.classList.toggle('active');
+    burgerBtn.setAttribute('aria-expanded', isActive);
     navOverlay.classList.toggle('active');
-
-    // Prevent scrolling on the grid when menu is up
+    if (isActive) {
+        lastFocusedElement = burgerBtn;
+        navOverlay.focus();
+    } else {
+        restoreFocus();
+    }
     document.body.style.overflow = isActive ? 'hidden' : '';
 });
 
@@ -396,44 +425,54 @@ burgerBtn.addEventListener('click', () => {
 document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
     link.addEventListener('click', (e) => {
         const href = link.getAttribute('href');
+        lastFocusedElement = burgerBtn;
 
         // Reset everything first
         heroOverlay.classList.remove('hidden');
         document.getElementById('services').classList.remove('active');
 
         if (href === '#hero-overlay') {
-            // Already resetting by removing 'hidden'
+            setTimeout(() => document.getElementById('enter-btn').focus(), 100);
         } else if (href === '#gallery-container') {
             heroOverlay.classList.add('hidden');
         } else if (href === '#services') {
             e.preventDefault();
-            document.getElementById('services').classList.add('active');
+            const s = document.getElementById('services');
+            s.classList.add('active');
+            s.focus();
         }
 
         burgerBtn.classList.remove('active');
+        burgerBtn.setAttribute('aria-expanded', 'false');
         navOverlay.classList.remove('active');
         document.body.style.overflow = '';
+        if (href !== '#services' && href !== '#hero-overlay') restoreFocus();
     });
 });
 
 // Services close
 document.getElementById('services-close').addEventListener('click', () => {
     document.getElementById('services').classList.remove('active');
+    restoreFocus();
 });
 
 // Close menu on background click
 navOverlay.addEventListener('click', (e) => {
     if (e.target === navOverlay) {
         burgerBtn.classList.remove('active');
+        burgerBtn.setAttribute('aria-expanded', 'false');
         navOverlay.classList.remove('active');
         document.body.style.overflow = '';
+        restoreFocus();
     }
 });
 
 // Close services on background click
-document.getElementById('services').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('services')) {
-        document.getElementById('services').classList.remove('active');
+const servicesOverlay = document.getElementById('services');
+servicesOverlay.addEventListener('click', (e) => {
+    if (e.target === servicesOverlay) {
+        servicesOverlay.classList.remove('active');
+        restoreFocus();
     }
 });
 
@@ -487,3 +526,25 @@ if (!isMobile) {
         });
     });
 }
+
+// Global Keyboard Handler
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (lightbox.classList.contains('active')) closeLightbox();
+        else if (navOverlay.classList.contains('active')) {
+            burgerBtn.classList.remove('active');
+            burgerBtn.setAttribute('aria-expanded', 'false');
+            navOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+            restoreFocus();
+        }
+        else if (document.getElementById('services').classList.contains('active')) {
+            document.getElementById('services').classList.remove('active');
+            restoreFocus();
+        }
+    }
+    if (lightbox.classList.contains('active')) {
+        if (e.key === 'ArrowLeft') document.getElementById('lightbox-prev').click();
+        if (e.key === 'ArrowRight') document.getElementById('lightbox-next').click();
+    }
+});
