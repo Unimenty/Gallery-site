@@ -1,0 +1,3 @@
+## 2025-05-14 - Keyboard Accessibility in Custom Cursor Interfaces
+**Learning:** In luxury editorial designs that use `cursor: none`, keyboard users lose all visual context because the browser's default focus ring is often hidden or insufficient. Additionally, virtualized "infinite" grids that use `visibility: hidden` require Playwright verification scripts to specifically check for computed visibility before interacting.
+**Action:** Always implement `:focus-visible` with high-contrast outlines (e.g., `2px solid #fff`) and ensure all `div`-based interactive elements have `role="button"` and `tabindex="0"`. Use programmatic `.focus()` on modals with `tabindex="-1"` to 'land' keyboard users in the new context.
