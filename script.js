@@ -1,3 +1,5 @@
+let lastFocusedElement;
+
 // Hero Enter Button Logic
 const enterBtn = document.getElementById('enter-btn');
 const heroOverlay = document.getElementById('hero-overlay');
@@ -174,6 +176,7 @@ for (let c = 0; c < cols; c++) {
 
         const img = document.createElement('img');
         img.src = source.src;
+        img.alt = source.name;
         img.loading = "lazy";
         const overlay = document.createElement('div');
         overlay.className = 'overlay';
@@ -188,8 +191,16 @@ for (let c = 0; c < cols; c++) {
 
         // Store click handler index in the element itself for dynamic updates
         el.dataset.sourceIdx = sourceIdx;
+        el.tabIndex = 0;
+        el.setAttribute('role', 'button');
         el.addEventListener('click', () => { 
             if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
+        });
+        el.addEventListener('keydown', (e) => {
+            if ((e.key === 'Enter' || e.key === ' ') && !wasDragged) {
+                e.preventDefault();
+                el.click();
+            }
         });
 
         items.push({
@@ -237,7 +248,7 @@ function updateGridPatternIfNeeded() {
                 // Update image source, caption, and click handler data attribute
                 const img = item.el.querySelector('.gallery-item-inner img');
                 const title = item.el.querySelector('.overlay h3');
-                if (img) img.src = newSource.src;
+                if (img) { img.src = newSource.src; img.alt = newSource.name; }
                 if (title) title.innerText = newSource.name;
                 item.el.dataset.sourceIdx = newSourceIdx;
             }
@@ -273,6 +284,27 @@ function render() {
         }
     });
 }
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (lightbox.classList.contains('active')) closeLightbox();
+        if (navOverlay.classList.contains('active')) {
+            burgerBtn.classList.remove('active');
+            burgerBtn.setAttribute('aria-expanded', 'false');
+            navOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+            lastFocusedElement?.focus();
+        }
+        const srv = document.getElementById('services');
+        if (srv.classList.contains('active')) {
+            srv.classList.remove('active');
+            lastFocusedElement?.focus();
+        }
+    } else if (lightbox.classList.contains('active')) {
+        if (e.key === 'ArrowLeft') document.getElementById('lightbox-prev').click();
+        if (e.key === 'ArrowRight') document.getElementById('lightbox-next').click();
+    }
+});
 
 
 function loop() {
@@ -346,18 +378,22 @@ const lbCaption = document.getElementById('lightbox-caption');
 let currentLbIndex = 0;
 
 function openLightbox(index) {
+    lastFocusedElement = document.activeElement;
     currentLbIndex = index;
     updateLightbox();
     lightbox.classList.add('active');
+    lightbox.focus();
 }
 
 function updateLightbox() {
     lbImg.src = imageSources[currentLbIndex].src;
+    lbImg.alt = imageSources[currentLbIndex].name;
     lbCaption.innerText = imageSources[currentLbIndex].name;
 }
 
 function closeLightbox() {
     lightbox.classList.remove('active');
+    lastFocusedElement?.focus();
 }
 
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
@@ -386,10 +422,13 @@ const navOverlay = document.getElementById('nav-overlay');
 
 burgerBtn.addEventListener('click', () => {
     const isActive = burgerBtn.classList.toggle('active');
+    burgerBtn.setAttribute('aria-expanded', isActive);
+    if (isActive) lastFocusedElement = document.activeElement;
     navOverlay.classList.toggle('active');
 
     // Prevent scrolling on the grid when menu is up
     document.body.style.overflow = isActive ? 'hidden' : '';
+    if (!isActive) lastFocusedElement?.focus();
 });
 
 // Generic Nav Link Handler (Specialized for single page interaction)
@@ -407,7 +446,10 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
             heroOverlay.classList.add('hidden');
         } else if (href === '#services') {
             e.preventDefault();
-            document.getElementById('services').classList.add('active');
+            lastFocusedElement = document.activeElement;
+            const services = document.getElementById('services');
+            services.classList.add('active');
+            services.focus();
         }
 
         burgerBtn.classList.remove('active');
@@ -419,6 +461,7 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
 // Services close
 document.getElementById('services-close').addEventListener('click', () => {
     document.getElementById('services').classList.remove('active');
+    lastFocusedElement?.focus();
 });
 
 // Close menu on background click
