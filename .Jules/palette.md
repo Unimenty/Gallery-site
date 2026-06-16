@@ -1,0 +1,3 @@
+## 2026-06-16 - Focus Management and Keyboard Accessibility in Dynamic Grids
+**Learning:** In highly interactive, mouse-driven portfolios, programmatic focus management is essential. Using a `lastFocusedElement` pattern allows for seamless transitions between the main content and modal overlays (Lightbox, Navigation, Services). For dynamic/infinite grids, converting items to `role="button"` and syncing ARIA labels/alt text in the render loop ensures screen reader consistency.
+**Action:** Always implement a centralized focus restoration mechanism and ensure `Escape` key handlers are context-aware for all active UI layers.
