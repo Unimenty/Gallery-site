@@ -1,0 +1,3 @@
+## 2026-06-17 - Keyboard Accessibility in Cursor-less Interfaces
+**Learning:** In high-fashion portfolios that hide the native cursor for aesthetic reasons, keyboard navigation becomes the primary fall-back for many users. Implementing high-contrast `:focus-visible` outlines and robust focus management (restoring focus after closing modals) is essential to prevent users from getting "lost" in the interface.
+**Action:** Always provide `:focus-visible` styles that contrast with the background, and use a `lastFocusedElement` pattern to ensure the focus ring returns to the triggering element after closing overlays.
