@@ -19,6 +19,7 @@ enterBtn.addEventListener('click', () => {
 });
 
 // ── PLATINUM GRID ENGINE ──
+let lastFocusedElement = null;
 const container = document.getElementById('gallery-container');
 const grid = document.getElementById('grid');
 const isMobile = window.matchMedia("(pointer: coarse)").matches;
@@ -188,9 +189,12 @@ for (let c = 0; c < cols; c++) {
 
         // Store click handler index in the element itself for dynamic updates
         el.dataset.sourceIdx = sourceIdx;
-        el.addEventListener('click', () => { 
-            if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
-        });
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('role', 'button');
+        el.setAttribute('aria-label', `View ${source.name}`);
+        const activate = () => { if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); };
+        el.addEventListener('click', activate);
+        el.addEventListener('keydown', e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), activate()));
 
         items.push({
             el,
@@ -239,6 +243,7 @@ function updateGridPatternIfNeeded() {
                 const title = item.el.querySelector('.overlay h3');
                 if (img) img.src = newSource.src;
                 if (title) title.innerText = newSource.name;
+                item.el.setAttribute('aria-label', `View ${newSource.name}`);
                 item.el.dataset.sourceIdx = newSourceIdx;
             }
         });
@@ -346,18 +351,22 @@ const lbCaption = document.getElementById('lightbox-caption');
 let currentLbIndex = 0;
 
 function openLightbox(index) {
+    lastFocusedElement = document.activeElement;
     currentLbIndex = index;
     updateLightbox();
     lightbox.classList.add('active');
+    lightbox.focus();
 }
 
 function updateLightbox() {
     lbImg.src = imageSources[currentLbIndex].src;
+    lbImg.alt = imageSources[currentLbIndex].name;
     lbCaption.innerText = imageSources[currentLbIndex].name;
 }
 
 function closeLightbox() {
     lightbox.classList.remove('active');
+    if (lastFocusedElement) lastFocusedElement.focus();
 }
 
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
@@ -386,9 +395,12 @@ const navOverlay = document.getElementById('nav-overlay');
 
 burgerBtn.addEventListener('click', () => {
     const isActive = burgerBtn.classList.toggle('active');
+    burgerBtn.setAttribute('aria-expanded', isActive);
     navOverlay.classList.toggle('active');
-
-    // Prevent scrolling on the grid when menu is up
+    if (isActive) {
+        lastFocusedElement = burgerBtn;
+        navOverlay.focus();
+    }
     document.body.style.overflow = isActive ? 'hidden' : '';
 });
 
@@ -402,15 +414,18 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
         document.getElementById('services').classList.remove('active');
 
         if (href === '#hero-overlay') {
-            // Already resetting by removing 'hidden'
+            // Already resetting
         } else if (href === '#gallery-container') {
             heroOverlay.classList.add('hidden');
         } else if (href === '#services') {
             e.preventDefault();
+            lastFocusedElement = link;
             document.getElementById('services').classList.add('active');
+            document.getElementById('services').focus();
         }
 
         burgerBtn.classList.remove('active');
+        burgerBtn.setAttribute('aria-expanded', 'false');
         navOverlay.classList.remove('active');
         document.body.style.overflow = '';
     });
@@ -419,6 +434,7 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
 // Services close
 document.getElementById('services-close').addEventListener('click', () => {
     document.getElementById('services').classList.remove('active');
+    if (lastFocusedElement) lastFocusedElement.focus();
 });
 
 // Close menu on background click
@@ -434,6 +450,20 @@ navOverlay.addEventListener('click', (e) => {
 document.getElementById('services').addEventListener('click', (e) => {
     if (e.target === document.getElementById('services')) {
         document.getElementById('services').classList.remove('active');
+        if (lastFocusedElement) lastFocusedElement.focus();
+    }
+});
+
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const svcs = document.getElementById('services');
+        if (lightbox.classList.contains('active')) closeLightbox();
+        else if (svcs.classList.contains('active')) {
+            svcs.classList.remove('active');
+            if (lastFocusedElement) lastFocusedElement.focus();
+        } else if (navOverlay.classList.contains('active')) {
+            burgerBtn.click();
+        }
     }
 });
 
@@ -456,7 +486,7 @@ if (!isMobile) {
             heroBg.style.transform = `scale(1.05) translate(${moveX}px, ${moveY}px)`;
         }
 
-        const isMagnetic = target.closest('.enter-btn-pill, .social-link, .burger-btn, .nav-link, .menu-inquiry-btn');
+        const isMagnetic = target.closest('.enter-btn-pill, .social-link, .burger-btn, .nav-link, .menu-inquiry-btn, .lightbox-close, .lightbox-btn, .services-close');
 
         // Custom Cursor movement
         ring.style.left = e.clientX + 'px';
@@ -464,7 +494,7 @@ if (!isMobile) {
         dot.style.left = e.clientX + 'px';
         dot.style.top = e.clientY + 'px';
 
-        if (target.closest('a, button, .gallery-item, .burger-btn')) {
+        if (target.closest('a, button, .gallery-item, .burger-btn, [role="button"]')) {
             document.body.classList.add('cursor-active');
         } else {
             document.body.classList.remove('cursor-active');
