@@ -1,0 +1,3 @@
+## 2026-06-19 - Centralized Focus Management in Multi-Overlay Architectures
+**Learning:** In editorial sites with multiple full-screen overlays (navigation, lightbox, services), a centralized focus management system using a `lastFocusedElement` global variable is essential. Without it, keyboard focus often remains on hidden triggering elements or resets to the body, breaking the user's navigational context and making the interface inaccessible to screen readers.
+**Action:** Implement a `restoreFocus()` pattern when closing any overlay and ensure that modal containers receive programmatic focus via `.focus()` (using `tabindex="-1"`) immediately upon opening. This keeps the accessibility tree synchronized with the visual experience.
