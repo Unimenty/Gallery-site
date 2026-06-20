@@ -188,9 +188,11 @@ for (let c = 0; c < cols; c++) {
 
         // Store click handler index in the element itself for dynamic updates
         el.dataset.sourceIdx = sourceIdx;
-        el.addEventListener('click', () => { 
-            if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
-        });
+        el.tabIndex = 0;
+        el.setAttribute('role', 'button');
+        const activate = () => { if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); };
+        el.addEventListener('click', activate);
+        el.addEventListener('keydown', e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), activate()));
 
         items.push({
             el,
@@ -344,20 +346,27 @@ const lightbox = document.getElementById('lightbox');
 const lbImg = document.getElementById('lightbox-img');
 const lbCaption = document.getElementById('lightbox-caption');
 let currentLbIndex = 0;
+let lastFocusedElement = null;
 
 function openLightbox(index) {
+    lastFocusedElement = document.activeElement;
     currentLbIndex = index;
     updateLightbox();
     lightbox.classList.add('active');
+    lightbox.focus();
 }
 
 function updateLightbox() {
     lbImg.src = imageSources[currentLbIndex].src;
     lbCaption.innerText = imageSources[currentLbIndex].name;
+    lbImg.setAttribute('alt', imageSources[currentLbIndex].name);
 }
+
+const restoreFocus = () => { if (lastFocusedElement) lastFocusedElement.focus(); };
 
 function closeLightbox() {
     lightbox.classList.remove('active');
+    restoreFocus();
 }
 
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
@@ -386,9 +395,10 @@ const navOverlay = document.getElementById('nav-overlay');
 
 burgerBtn.addEventListener('click', () => {
     const isActive = burgerBtn.classList.toggle('active');
+    burgerBtn.setAttribute('aria-expanded', isActive);
+    if (isActive) lastFocusedElement = document.activeElement;
     navOverlay.classList.toggle('active');
-
-    // Prevent scrolling on the grid when menu is up
+    if (isActive) navOverlay.focus(); else restoreFocus();
     document.body.style.overflow = isActive ? 'hidden' : '';
 });
 
@@ -411,6 +421,7 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
         }
 
         burgerBtn.classList.remove('active');
+        burgerBtn.setAttribute('aria-expanded', 'false');
         navOverlay.classList.remove('active');
         document.body.style.overflow = '';
     });
@@ -419,14 +430,13 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
 // Services close
 document.getElementById('services-close').addEventListener('click', () => {
     document.getElementById('services').classList.remove('active');
+    restoreFocus();
 });
 
 // Close menu on background click
 navOverlay.addEventListener('click', (e) => {
     if (e.target === navOverlay) {
-        burgerBtn.classList.remove('active');
-        navOverlay.classList.remove('active');
-        document.body.style.overflow = '';
+        burgerBtn.click();
     }
 });
 
@@ -434,6 +444,24 @@ navOverlay.addEventListener('click', (e) => {
 document.getElementById('services').addEventListener('click', (e) => {
     if (e.target === document.getElementById('services')) {
         document.getElementById('services').classList.remove('active');
+        restoreFocus();
+    }
+});
+
+// ── GLOBAL KEYBOARD LISTENERS ──
+window.addEventListener('keydown', (e) => {
+    const services = document.getElementById('services');
+    if (e.key === 'Escape') {
+        if (lightbox.classList.contains('active')) closeLightbox();
+        else if (navOverlay.classList.contains('active')) burgerBtn.click();
+        else if (services.classList.contains('active')) {
+            services.classList.remove('active');
+            restoreFocus();
+        }
+    }
+    if (lightbox.classList.contains('active')) {
+        if (e.key === 'ArrowLeft') document.getElementById('lightbox-prev').click();
+        if (e.key === 'ArrowRight') document.getElementById('lightbox-next').click();
     }
 });
 
