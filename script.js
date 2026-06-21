@@ -164,6 +164,8 @@ for (let c = 0; c < cols; c++) {
     for (let r = 0; r < rows; r++) {
         const el = document.createElement('div');
         el.className = 'gallery-item';
+        el.tabIndex = 0;
+        el.setAttribute('role', 'button');
         el.style.width = itemActualW + 'px';
         el.style.height = itemActualH + 'px';
         const inner = document.createElement('div');
@@ -179,6 +181,7 @@ for (let c = 0; c < cols; c++) {
         overlay.className = 'overlay';
         const title = document.createElement('h3');
         title.innerText = source.name;
+        el.setAttribute('aria-label', `View ${source.name}`);
 
         overlay.appendChild(title);
         inner.appendChild(img);
@@ -190,6 +193,12 @@ for (let c = 0; c < cols; c++) {
         el.dataset.sourceIdx = sourceIdx;
         el.addEventListener('click', () => { 
             if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
+        });
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                el.click();
+            }
         });
 
         items.push({
@@ -239,6 +248,7 @@ function updateGridPatternIfNeeded() {
                 const title = item.el.querySelector('.overlay h3');
                 if (img) img.src = newSource.src;
                 if (title) title.innerText = newSource.name;
+                item.el.setAttribute('aria-label', `View ${newSource.name}`);
                 item.el.dataset.sourceIdx = newSourceIdx;
             }
         });
