@@ -166,6 +166,8 @@ for (let c = 0; c < cols; c++) {
         el.className = 'gallery-item';
         el.style.width = itemActualW + 'px';
         el.style.height = itemActualH + 'px';
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('role', 'button');
         const inner = document.createElement('div');
         inner.className = 'gallery-item-inner';
 
@@ -188,9 +190,11 @@ for (let c = 0; c < cols; c++) {
 
         // Store click handler index in the element itself for dynamic updates
         el.dataset.sourceIdx = sourceIdx;
+        el.setAttribute('aria-label', `View ${source.name}`);
         el.addEventListener('click', () => { 
             if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
         });
+        el.addEventListener('keydown', e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), el.click()));
 
         items.push({
             el,
@@ -240,6 +244,7 @@ function updateGridPatternIfNeeded() {
                 if (img) img.src = newSource.src;
                 if (title) title.innerText = newSource.name;
                 item.el.dataset.sourceIdx = newSourceIdx;
+                item.el.setAttribute('aria-label', `View ${newSource.name}`);
             }
         });
     }
@@ -387,7 +392,7 @@ const navOverlay = document.getElementById('nav-overlay');
 burgerBtn.addEventListener('click', () => {
     const isActive = burgerBtn.classList.toggle('active');
     navOverlay.classList.toggle('active');
-
+    burgerBtn.setAttribute('aria-expanded', isActive);
     // Prevent scrolling on the grid when menu is up
     document.body.style.overflow = isActive ? 'hidden' : '';
 });
@@ -487,3 +492,17 @@ if (!isMobile) {
         });
     });
 }
+
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (lightbox.classList.contains('active')) closeLightbox();
+        if (navOverlay.classList.contains('active')) {
+            burgerBtn.click();
+        }
+        document.getElementById('services').classList.remove('active');
+    }
+    if (lightbox.classList.contains('active')) {
+        if (e.key === 'ArrowLeft') document.getElementById('lightbox-prev').click();
+        if (e.key === 'ArrowRight') document.getElementById('lightbox-next').click();
+    }
+});

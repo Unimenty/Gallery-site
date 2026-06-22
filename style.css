@@ -855,3 +855,14 @@ body {
         right: 1.5rem;
     }
 }
+
+/* ── FOCUS VISIBILITY ── */
+:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 4px;
+}
+
+.gallery-item:focus-visible {
+    outline-offset: -4px;
+    border-radius: 8px;
+}
