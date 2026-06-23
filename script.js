@@ -1,4 +1,5 @@
 // Hero Enter Button Logic
+let lastFocusedElement = null;
 const enterBtn = document.getElementById('enter-btn');
 const heroOverlay = document.getElementById('hero-overlay');
 
@@ -175,6 +176,7 @@ for (let c = 0; c < cols; c++) {
         const img = document.createElement('img');
         img.src = source.src;
         img.loading = "lazy";
+        img.alt = source.name;
         const overlay = document.createElement('div');
         overlay.className = 'overlay';
         const title = document.createElement('h3');
@@ -188,9 +190,13 @@ for (let c = 0; c < cols; c++) {
 
         // Store click handler index in the element itself for dynamic updates
         el.dataset.sourceIdx = sourceIdx;
+        el.tabIndex = 0;
+        el.setAttribute('role', 'button');
+        el.setAttribute('aria-label', source.name);
         el.addEventListener('click', () => { 
             if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
         });
+        el.addEventListener('keydown', e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), el.click()));
 
         items.push({
             el,
@@ -237,9 +243,10 @@ function updateGridPatternIfNeeded() {
                 // Update image source, caption, and click handler data attribute
                 const img = item.el.querySelector('.gallery-item-inner img');
                 const title = item.el.querySelector('.overlay h3');
-                if (img) img.src = newSource.src;
+                if (img) { img.src = newSource.src; img.alt = newSource.name; }
                 if (title) title.innerText = newSource.name;
                 item.el.dataset.sourceIdx = newSourceIdx;
+                item.el.setAttribute('aria-label', newSource.name);
             }
         });
     }
@@ -346,18 +353,22 @@ const lbCaption = document.getElementById('lightbox-caption');
 let currentLbIndex = 0;
 
 function openLightbox(index) {
+    lastFocusedElement = document.activeElement;
     currentLbIndex = index;
     updateLightbox();
     lightbox.classList.add('active');
+    lightbox.focus();
 }
 
 function updateLightbox() {
     lbImg.src = imageSources[currentLbIndex].src;
+    lbImg.alt = imageSources[currentLbIndex].name;
     lbCaption.innerText = imageSources[currentLbIndex].name;
 }
 
 function closeLightbox() {
     lightbox.classList.remove('active');
+    if (lastFocusedElement) lastFocusedElement.focus();
 }
 
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
@@ -386,9 +397,14 @@ const navOverlay = document.getElementById('nav-overlay');
 
 burgerBtn.addEventListener('click', () => {
     const isActive = burgerBtn.classList.toggle('active');
+    burgerBtn.setAttribute('aria-expanded', isActive);
     navOverlay.classList.toggle('active');
-
-    // Prevent scrolling on the grid when menu is up
+    if (isActive) {
+        lastFocusedElement = document.activeElement;
+        navOverlay.focus();
+    } else if (lastFocusedElement) {
+        lastFocusedElement.focus();
+    }
     document.body.style.overflow = isActive ? 'hidden' : '';
 });
 
@@ -487,3 +503,16 @@ if (!isMobile) {
         });
     });
 }
+
+// Global Keyboard Listeners
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeLightbox();
+        if (navOverlay.classList.contains('active')) burgerBtn.click();
+        document.getElementById('services').classList.remove('active');
+    }
+    if (lightbox.classList.contains('active')) {
+        if (e.key === 'ArrowLeft') document.getElementById('lightbox-prev').click();
+        if (e.key === 'ArrowRight') document.getElementById('lightbox-next').click();
+    }
+});
