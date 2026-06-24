@@ -855,3 +855,15 @@ body {
         right: 1.5rem;
     }
 }
+
+/* ── FOCUS STATES ── */
+a:focus-visible, button:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+.gallery-item:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: -4px;
+    border-radius: 8px;
+}
