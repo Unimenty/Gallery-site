@@ -166,6 +166,8 @@ for (let c = 0; c < cols; c++) {
         el.className = 'gallery-item';
         el.style.width = itemActualW + 'px';
         el.style.height = itemActualH + 'px';
+        el.tabIndex = 0;
+        el.setAttribute('role', 'button');
         const inner = document.createElement('div');
         inner.className = 'gallery-item-inner';
 
@@ -179,6 +181,7 @@ for (let c = 0; c < cols; c++) {
         overlay.className = 'overlay';
         const title = document.createElement('h3');
         title.innerText = source.name;
+        el.setAttribute('aria-label', source.name);
 
         overlay.appendChild(title);
         inner.appendChild(img);
@@ -190,6 +193,12 @@ for (let c = 0; c < cols; c++) {
         el.dataset.sourceIdx = sourceIdx;
         el.addEventListener('click', () => { 
             if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
+        });
+        el.addEventListener('keydown', e => {
+            if ((e.key === 'Enter' || e.key === ' ') && !wasDragged) {
+                e.preventDefault();
+                openLightbox(parseInt(el.dataset.sourceIdx));
+            }
         });
 
         items.push({
@@ -239,6 +248,7 @@ function updateGridPatternIfNeeded() {
                 const title = item.el.querySelector('.overlay h3');
                 if (img) img.src = newSource.src;
                 if (title) title.innerText = newSource.name;
+                item.el.setAttribute('aria-label', newSource.name);
                 item.el.dataset.sourceIdx = newSourceIdx;
             }
         });
@@ -387,6 +397,7 @@ const navOverlay = document.getElementById('nav-overlay');
 burgerBtn.addEventListener('click', () => {
     const isActive = burgerBtn.classList.toggle('active');
     navOverlay.classList.toggle('active');
+    burgerBtn.setAttribute('aria-expanded', isActive);
 
     // Prevent scrolling on the grid when menu is up
     document.body.style.overflow = isActive ? 'hidden' : '';
@@ -487,3 +498,17 @@ if (!isMobile) {
         });
     });
 }
+
+// Global Keyboard Handler for Escape key
+window.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        closeLightbox();
+        if (burgerBtn) {
+            burgerBtn.classList.remove('active');
+            burgerBtn.setAttribute('aria-expanded', 'false');
+        }
+        if (navOverlay) navOverlay.classList.remove('active');
+        document.getElementById('services')?.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+});
