@@ -1,0 +1,3 @@
+## 2025-06-25 - Focus Management in Infinite/Virtual Grids
+**Learning:** In infinite scroll or virtualized grids (like Platinum Grid Engine), focus management requires careful synchronization. Simply adding `tabindex="0"` is insufficient if elements are recycled; the `aria-label` and interaction handlers must be re-bound or updated during the recycle loop to maintain accessibility. Additionally, restoring focus to a recently interacted grid item after closing a modal is critical for spatial orientation.
+**Action:** Always implement a `saveFocus()` and `restoreFocus()` pattern when opening/closing overlays. For dynamic grids, ensure accessibility attributes (like `aria-label` and roles) are part of the element's update/render cycle.
