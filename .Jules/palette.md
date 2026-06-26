@@ -1,0 +1,3 @@
+## 2025-06-26 - [Keyboard Accessibility in Virtualized Grids]
+**Learning:** In infinite or virtualized grids (like Platinum Grid Engine), merely adding 'tabindex="0"' is insufficient because elements are recycled. Accessibility metadata like 'aria-label' and event listeners must be synchronized during the recycle loop to prevent stale data. Additionally, when the default cursor is hidden for a luxury aesthetic, high-contrast ':focus-visible' outlines are critical for keyboard navigation.
+**Action:** Always update 'aria-label' and other ARIA attributes inside the grid's render/recycle function (e.g., 'updateGridPatternIfNeeded'). Apply 'outline-offset' to keep focus rings within item boundaries.

@@ -164,6 +164,9 @@ for (let c = 0; c < cols; c++) {
     for (let r = 0; r < rows; r++) {
         const el = document.createElement('div');
         el.className = 'gallery-item';
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('role', 'button');
+        el.addEventListener('keydown', e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), el.click()));
         el.style.width = itemActualW + 'px';
         el.style.height = itemActualH + 'px';
         const inner = document.createElement('div');
@@ -171,6 +174,7 @@ for (let c = 0; c < cols; c++) {
 
         const sourceIdx = gridMatrix[c][r];
         const source = imageSources[sourceIdx];
+        el.setAttribute('aria-label', source.name);
 
         const img = document.createElement('img');
         img.src = source.src;
@@ -239,6 +243,7 @@ function updateGridPatternIfNeeded() {
                 const title = item.el.querySelector('.overlay h3');
                 if (img) img.src = newSource.src;
                 if (title) title.innerText = newSource.name;
+                item.el.setAttribute('aria-label', newSource.name);
                 item.el.dataset.sourceIdx = newSourceIdx;
             }
         });
@@ -387,9 +392,19 @@ const navOverlay = document.getElementById('nav-overlay');
 burgerBtn.addEventListener('click', () => {
     const isActive = burgerBtn.classList.toggle('active');
     navOverlay.classList.toggle('active');
-
-    // Prevent scrolling on the grid when menu is up
+    burgerBtn.setAttribute('aria-expanded', isActive);
     document.body.style.overflow = isActive ? 'hidden' : '';
+});
+
+window.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        closeLightbox();
+        burgerBtn.classList.remove('active');
+        navOverlay.classList.remove('active');
+        burgerBtn.setAttribute('aria-expanded', 'false');
+        document.getElementById('services').classList.remove('active');
+        document.body.style.overflow = '';
+    }
 });
 
 // Generic Nav Link Handler (Specialized for single page interaction)
