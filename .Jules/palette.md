@@ -1,0 +1,3 @@
+## 2024-05-22 - [Keyboard Focus Management & Visibility]
+**Learning:** In luxury editorial designs that suppress the mouse cursor (`cursor: none`), keyboard focus indicators (`:focus-visible`) become the primary navigation guide and must be high-contrast and unambiguous. Additionally, programmatic focus management (trapping focus in overlays and restoring it to the trigger element) is critical to prevent focus from becoming lost in the background DOM when overlays are active.
+**Action:** Always implement high-visibility `:focus-visible` outlines (e.g., 2px solid #fff) when the cursor is hidden, and use a `lastFocusedElement` pattern to ensure focus is restored to the triggering button after closing any modal or navigation overlay.
