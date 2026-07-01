@@ -22,6 +22,10 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── FOCUS INDICATORS ── */
+:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+.gallery-item:focus-visible { outline-offset: -4px; border-radius: 8px; }
+
 .noise-overlay {
     position: fixed;
     top: 0;

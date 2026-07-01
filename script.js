@@ -162,15 +162,18 @@ const gridMatrix = gridPatterns[0]; // Use first pattern for initial render
 
 for (let c = 0; c < cols; c++) {
     for (let r = 0; r < rows; r++) {
+        const sourceIdx = gridMatrix[c][r];
+        const source = imageSources[sourceIdx];
+
         const el = document.createElement('div');
         el.className = 'gallery-item';
+        el.tabIndex = 0;
+        el.setAttribute('role', 'button');
+        el.setAttribute('aria-label', `${source.name} - View Image`);
         el.style.width = itemActualW + 'px';
         el.style.height = itemActualH + 'px';
         const inner = document.createElement('div');
         inner.className = 'gallery-item-inner';
-
-        const sourceIdx = gridMatrix[c][r];
-        const source = imageSources[sourceIdx];
 
         const img = document.createElement('img');
         img.src = source.src;
@@ -190,6 +193,12 @@ for (let c = 0; c < cols; c++) {
         el.dataset.sourceIdx = sourceIdx;
         el.addEventListener('click', () => { 
             if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
+        });
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                el.click();
+            }
         });
 
         items.push({
@@ -240,6 +249,7 @@ function updateGridPatternIfNeeded() {
                 if (img) img.src = newSource.src;
                 if (title) title.innerText = newSource.name;
                 item.el.dataset.sourceIdx = newSourceIdx;
+                item.el.setAttribute('aria-label', `${newSource.name} - View Image`);
             }
         });
     }
@@ -344,11 +354,14 @@ const lightbox = document.getElementById('lightbox');
 const lbImg = document.getElementById('lightbox-img');
 const lbCaption = document.getElementById('lightbox-caption');
 let currentLbIndex = 0;
+let lastFocusedElement = null;
 
 function openLightbox(index) {
+    lastFocusedElement = document.activeElement;
     currentLbIndex = index;
     updateLightbox();
     lightbox.classList.add('active');
+    lightbox.focus();
 }
 
 function updateLightbox() {
@@ -358,6 +371,7 @@ function updateLightbox() {
 
 function closeLightbox() {
     lightbox.classList.remove('active');
+    if (lastFocusedElement) lastFocusedElement.focus();
 }
 
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
@@ -387,7 +401,12 @@ const navOverlay = document.getElementById('nav-overlay');
 burgerBtn.addEventListener('click', () => {
     const isActive = burgerBtn.classList.toggle('active');
     navOverlay.classList.toggle('active');
-
+    if (isActive) {
+        lastFocusedElement = document.activeElement;
+        navOverlay.focus();
+    } else if (lastFocusedElement) {
+        lastFocusedElement.focus();
+    }
     // Prevent scrolling on the grid when menu is up
     document.body.style.overflow = isActive ? 'hidden' : '';
 });
@@ -487,3 +506,20 @@ if (!isMobile) {
         });
     });
 }
+
+// ── GLOBAL KEYBOARD LISTENERS ──
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (lightbox.classList.contains('active')) closeLightbox();
+        if (navOverlay.classList.contains('active')) {
+            burgerBtn.classList.remove('active');
+            navOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        document.getElementById('services').classList.remove('active');
+    }
+    if (lightbox.classList.contains('active')) {
+        if (e.key === 'ArrowLeft') document.getElementById('lightbox-prev').click();
+        if (e.key === 'ArrowRight') document.getElementById('lightbox-next').click();
+    }
+});
