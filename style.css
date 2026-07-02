@@ -571,6 +571,11 @@ body {
     }
 }
 
+/* Focus Indicators */
+:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+.gallery-item:focus-visible { outline-offset: -4px; }
+.gallery-item:focus-visible .gallery-item-inner { filter: brightness(1) grayscale(0); transform: scale(1.05); }
+
 /* On mobile, tapping brightens it up natively via active state or we just leave it dark and brighten in focus */
 .gallery-item:active .gallery-item-inner {
     filter: brightness(1) grayscale(0);
