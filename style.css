@@ -571,6 +571,24 @@ body {
     }
 }
 
+/* Focus Visible Styles for Keyboard Navigation */
+:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 4px;
+}
+
+.gallery-item:focus-visible {
+    outline-offset: -4px;
+}
+
+.burger-btn:focus-visible,
+.social-link:focus-visible,
+.lightbox-close:focus-visible,
+.lightbox-btn:focus-visible,
+.services-close:focus-visible {
+    outline-offset: 2px;
+}
+
 /* On mobile, tapping brightens it up natively via active state or we just leave it dark and brighten in focus */
 .gallery-item:active .gallery-item-inner {
     filter: brightness(1) grayscale(0);

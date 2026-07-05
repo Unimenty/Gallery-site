@@ -164,6 +164,8 @@ for (let c = 0; c < cols; c++) {
     for (let r = 0; r < rows; r++) {
         const el = document.createElement('div');
         el.className = 'gallery-item';
+        el.setAttribute('role', 'button');
+        el.setAttribute('tabindex', '0');
         el.style.width = itemActualW + 'px';
         el.style.height = itemActualH + 'px';
         const inner = document.createElement('div');
@@ -190,6 +192,12 @@ for (let c = 0; c < cols; c++) {
         el.dataset.sourceIdx = sourceIdx;
         el.addEventListener('click', () => { 
             if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
+        });
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                el.click();
+            }
         });
 
         items.push({
@@ -386,6 +394,7 @@ const navOverlay = document.getElementById('nav-overlay');
 
 burgerBtn.addEventListener('click', () => {
     const isActive = burgerBtn.classList.toggle('active');
+    burgerBtn.setAttribute('aria-expanded', isActive);
     navOverlay.classList.toggle('active');
 
     // Prevent scrolling on the grid when menu is up
@@ -411,6 +420,7 @@ document.querySelectorAll('.nav-link, #brand-link').forEach(link => {
         }
 
         burgerBtn.classList.remove('active');
+        burgerBtn.setAttribute('aria-expanded', 'false');
         navOverlay.classList.remove('active');
         document.body.style.overflow = '';
     });
@@ -425,6 +435,7 @@ document.getElementById('services-close').addEventListener('click', () => {
 navOverlay.addEventListener('click', (e) => {
     if (e.target === navOverlay) {
         burgerBtn.classList.remove('active');
+        burgerBtn.setAttribute('aria-expanded', 'false');
         navOverlay.classList.remove('active');
         document.body.style.overflow = '';
     }
@@ -487,3 +498,21 @@ if (!isMobile) {
         });
     });
 }
+
+// ── GLOBAL KEYBOARD SHORTCUTS ──
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeLightbox();
+        if (navOverlay.classList.contains('active')) {
+            burgerBtn.classList.remove('active');
+            burgerBtn.setAttribute('aria-expanded', 'false');
+            navOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        document.getElementById('services').classList.remove('active');
+    }
+    if (lightbox.classList.contains('active')) {
+        if (e.key === 'ArrowLeft') document.getElementById('lightbox-prev').click();
+        else if (e.key === 'ArrowRight') document.getElementById('lightbox-next').click();
+    }
+});
