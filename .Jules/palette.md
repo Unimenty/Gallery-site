@@ -1,0 +1,3 @@
+## 2024-05-23 - Keyboard Accessibility for Virtualized Grids
+**Learning:** In virtualized or infinite grids (like Platinum Grid Engine), merely adding 'tabindex="0"' is insufficient if the grid recycles elements. Accessibility metadata (e.g., 'aria-label', 'alt' text) and interaction listeners must be manually updated or re-bound within the recycle/render loop to prevent stale data or lost functionality.
+**Action:** Always verify that 'aria-label' and other semantic attributes are updated inside the grid's update/recycle function (e.g., `updateGridPatternIfNeeded`) to match the new content being displayed.
