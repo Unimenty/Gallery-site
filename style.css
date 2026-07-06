@@ -538,6 +538,19 @@ body {
     left: 0;
     will-change: transform;
     z-index: 1;
+    outline: none;
+}
+
+.gallery-item:focus-visible {
+    z-index: 100;
+}
+
+.gallery-item:focus-visible .gallery-item-inner {
+    outline: 2px solid #fff;
+    outline-offset: -4px;
+    transform: scale(1.08) translateY(-10px);
+    filter: brightness(1.1) grayscale(0);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
 }
 
 .gallery-item:hover {

@@ -174,6 +174,7 @@ for (let c = 0; c < cols; c++) {
 
         const img = document.createElement('img');
         img.src = source.src;
+        img.alt = source.name;
         img.loading = "lazy";
         const overlay = document.createElement('div');
         overlay.className = 'overlay';
@@ -188,8 +189,17 @@ for (let c = 0; c < cols; c++) {
 
         // Store click handler index in the element itself for dynamic updates
         el.dataset.sourceIdx = sourceIdx;
+        el.setAttribute('role', 'button');
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('aria-label', `View ${source.name}`);
         el.addEventListener('click', () => { 
             if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
+        });
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                el.click();
+            }
         });
 
         items.push({
@@ -237,8 +247,12 @@ function updateGridPatternIfNeeded() {
                 // Update image source, caption, and click handler data attribute
                 const img = item.el.querySelector('.gallery-item-inner img');
                 const title = item.el.querySelector('.overlay h3');
-                if (img) img.src = newSource.src;
+                if (img) {
+                    img.src = newSource.src;
+                    img.alt = newSource.name;
+                }
                 if (title) title.innerText = newSource.name;
+                item.el.setAttribute('aria-label', `View ${newSource.name}`);
                 item.el.dataset.sourceIdx = newSourceIdx;
             }
         });
