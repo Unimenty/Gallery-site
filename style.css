@@ -80,6 +80,16 @@ body {
 .gallery-item {
     opacity: 0;
     transition: opacity 1.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+    outline: none;
+}
+
+.gallery-item:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: -4px;
+}
+
+.gallery-item:focus-visible .gallery-item-inner {
+    transform: scale(0.98);
 }
 
 .gallery-item.revealed {
@@ -166,9 +176,13 @@ body {
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.social-link:hover {
+.social-link:hover,
+.social-link:focus-visible {
     opacity: 1;
     transform: scale(1.1);
+    outline: 2px solid #fff;
+    outline-offset: 4px;
+    border-radius: 2px;
 }
 
 .social-link svg {
@@ -265,9 +279,12 @@ body {
     display: block;
 }
 
-.nav-link:hover {
+.nav-link:hover,
+.nav-link:focus-visible {
     opacity: 1;
     letter-spacing: 4px;
+    outline: none;
+    text-decoration: underline;
 }
 
 .menu-inquiry-btn {
@@ -462,8 +479,16 @@ body {
     box-shadow: 0 10px 30px rgba(255, 255, 255, 0.1);
 }
 
-.enter-btn-pill:hover::before {
+.enter-btn-pill:hover::before,
+.enter-btn-pill:focus-visible::before {
     transform: translateY(0);
+}
+
+.enter-btn-pill:focus-visible {
+    color: #000;
+    border-color: #fff;
+    outline: 2px solid #fff;
+    outline-offset: 4px;
 }
 
 .enter-btn-pill .arrow {

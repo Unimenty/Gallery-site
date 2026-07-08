@@ -166,11 +166,15 @@ for (let c = 0; c < cols; c++) {
         el.className = 'gallery-item';
         el.style.width = itemActualW + 'px';
         el.style.height = itemActualH + 'px';
-        const inner = document.createElement('div');
-        inner.className = 'gallery-item-inner';
 
         const sourceIdx = gridMatrix[c][r];
         const source = imageSources[sourceIdx];
+
+        Object.assign(el, { role: 'button', tabIndex: 0 });
+        el.setAttribute('aria-label', `View ${source.name} photo`);
+
+        const inner = document.createElement('div');
+        inner.className = 'gallery-item-inner';
 
         const img = document.createElement('img');
         img.src = source.src;
@@ -188,9 +192,9 @@ for (let c = 0; c < cols; c++) {
 
         // Store click handler index in the element itself for dynamic updates
         el.dataset.sourceIdx = sourceIdx;
-        el.addEventListener('click', () => { 
-            if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); 
-        });
+        const trigger = () => { if (!wasDragged) openLightbox(parseInt(el.dataset.sourceIdx)); };
+        el.addEventListener('click', trigger);
+        el.addEventListener('keydown', (e) => { if (['Enter', ' '].includes(e.key)) { e.preventDefault(); trigger(); } });
 
         items.push({
             el,
@@ -240,6 +244,7 @@ function updateGridPatternIfNeeded() {
                 if (img) img.src = newSource.src;
                 if (title) title.innerText = newSource.name;
                 item.el.dataset.sourceIdx = newSourceIdx;
+                item.el.setAttribute('aria-label', `View ${newSource.name} photo`);
             }
         });
     }
@@ -344,11 +349,14 @@ const lightbox = document.getElementById('lightbox');
 const lbImg = document.getElementById('lightbox-img');
 const lbCaption = document.getElementById('lightbox-caption');
 let currentLbIndex = 0;
+let lastFocusedElement = null;
 
 function openLightbox(index) {
+    lastFocusedElement = document.activeElement;
     currentLbIndex = index;
     updateLightbox();
     lightbox.classList.add('active');
+    lightbox.focus();
 }
 
 function updateLightbox() {
@@ -358,6 +366,7 @@ function updateLightbox() {
 
 function closeLightbox() {
     lightbox.classList.remove('active');
+    if (lastFocusedElement) lastFocusedElement.focus();
 }
 
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
